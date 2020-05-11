@@ -13,4 +13,48 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
-console.log('yolo')
+var db = firebase.firestore();
+
+$(document).ready(function () {
+  bindSubmitEntry();
+  streamAllEntries();
+});
+
+function bindSubmitEntry() {
+  $("#newEntryForm").submit(function (event) {
+    event.preventDefault();
+
+    const entry = event.target.entry.value;
+    saveNewEntry(entry);
+  });
+}
+
+// Saves a new entry to Firebase
+function saveNewEntry(entry) {
+  db.collection("entries")
+    .add({
+      text: entry,
+      dateAdded: new Date(),
+    })
+    .then(function (docRef) {
+      console.log("Document written with ID: ", docRef.id);
+    })
+    .catch(function (error) {
+      console.error("Error adding document: ", error);
+    });
+}
+
+// Livestreams all entries in Firebase
+function streamAllEntries() {
+    const $dbEntries = $('#dbEntries');
+    db.collection("entries")
+    .onSnapshot(function(snapshot) {
+        // Isolate the change between snapshots
+        snapshot.docChanges().forEach(function(change) {
+            const entry = change.doc.data();
+            console.log(entry)
+            $dbEntries.append(`${entry.text} * `);
+        });
+    });
+
+}
