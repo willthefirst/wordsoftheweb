@@ -106,6 +106,11 @@ function createNewEntryRef() {
 
 // Updates entries in db.
 function updateNewEntry(ref, value) {
+  if (value.length > 500) {
+    alert('Sorry, not gonna let you type more than 500 characters.');
+    return
+  }
+  
   ref
     .update({
       text: value,
