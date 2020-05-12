@@ -16,42 +16,27 @@ firebase.analytics();
 const db = firebase.firestore();
 
 $(document).ready(function () {
-  initializeWall();
+  listenToDB();
+  bindNewEntryHandlers();
 });
 
 // Livestreams all entries in Firebase
-function initializeWall() {
+function listenToDB() {
   let loading = true;
   const $dbEntries = $("#dbEntries");
 
   db.collection("entries")
     .orderBy("dateAdded")
     .onSnapshot(function (snapshot) {
-      // Initial load: load saved data and initialize new entry form
       if (loading) {
         $dbEntries.html("");
         loading = false;
-        snapshot.docs.forEach(function (doc) {
-          const entryId = doc.id;
-          const entryData = doc.data();
-          $dbEntries.append(entryTemplate(entryData.text, entryId));
-        });
-        bindNewEntryHandlers();
       }
 
-      //  After initial load: Listen for live updates
       snapshot.docChanges().forEach(function (change) {
         const entryId = change.doc.id;
         const entryData = change.doc.data();
-        const $entryToUpdate = $(`#fbId_${entryId}`);
-
-        if ($entryToUpdate.length) {
-          // If entry exists in DOM, update it
-          $entryToUpdate.html(entryData.text);
-        } else {
-          // It it doesn't yet exist, create it
-          $dbEntries.append(entryTemplate(entryData.text, entryId));
-        }
+        $dbEntries.append(entryTemplate(entryData.text, entryId));
       });
     });
 }
@@ -60,32 +45,23 @@ function bindNewEntryHandlers() {
   const $newEntryForm = $(".newEntryForm");
   const $newEntryField = $(".newEntryField");
 
-  // Create a new document with in db.
-  const newEntryRef = createNewEntryRef();
-
-  // Update db when form value changes
-  $newEntryField.on("keyup", function (event) {
-    event.preventDefault();
-    updateNewEntry(newEntryRef, $(this).val());
-  });
-
   // Prevent pasting into input
   $newEntryForm.on("paste", function (event) {
     event.preventDefault();
   });
 
+  // On submit, add new entry to db
   $newEntryForm.on("submit", function (event) {
     event.preventDefault();
-
-    // Unbind all handlers
-    $newEntryForm.off();
-    $newEntryField.off();
-
-    // Clear the input
+    const text = event.target.entry.value;
     $newEntryField.val("").focus();
 
-    // Reinitialize
-    bindNewEntryHandlers();
+    saveNewEntry(text)
+      .then(function () {})
+      .catch(function (obj) {
+        $newEntryField.val(obj.text);
+        alert(obj.error);
+      });
   });
 }
 
@@ -93,32 +69,34 @@ function bindNewEntryHandlers() {
 // Firebase methods
 //
 
-// Creates a new entry in db.
-function createNewEntryRef() {
-  let initialValue = {
-    text: "stary typing...",
-    dateAdded: new Date(),
-  };
-  const newEntryRef = db.collection("entries").doc();
-  newEntryRef.set(initialValue);
-  return newEntryRef;
-}
-
 // Updates entries in db.
-function updateNewEntry(ref, value) {
-  if (value.length > 500) {
-    alert('Sorry, not gonna let you type more than 500 characters.');
-    return
-  }
+function saveNewEntry(text) {
+  return new Promise(function (resolve, reject) {
+    if (text.length < 5 || text.length > 500) {
+      reject({
+        text: text,
+        error: "Too long or short.",
+      });
+      return;
+    }
 
-  ref
-    .update({
-      text: value,
-    })
-    .catch(function (error) {
-      // The document probably doesn't exist.
-      console.error("Error updating document: ", error);
-    });
+    const entry = {
+      text: text,
+      dateAdded: new Date(),
+    };
+
+    db.collection("entries")
+      .add(entry)
+      .then(function () {
+        resolve();
+      })
+      .catch(function (error) {
+        reject({
+          text: text,
+          error: error,
+        });
+      });
+  });
 }
 
 //
@@ -127,7 +105,6 @@ function updateNewEntry(ref, value) {
 
 function entryTemplate(text, id) {
   const entryId = `fbId_${id}`;
-
   return `<span id=${entryId} contenteditable="true">${text}</span>
           <span class="separator"> * </span>`;
 }
