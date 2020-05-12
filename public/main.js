@@ -1,14 +1,15 @@
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyADcwKzmElrr-XQAzyfHl8PukYRMaWfCcE",
-  authDomain: "walloftext-78632.firebaseapp.com",
-  databaseURL: "https://walloftext-78632.firebaseio.com",
-  projectId: "walloftext-78632",
-  storageBucket: "walloftext-78632.appspot.com",
-  messagingSenderId: "609649100590",
-  appId: "1:609649100590:web:1db85680c7ff14cc241cbf",
-  measurementId: "G-7KYF8P2111",
+  apiKey: "AIzaSyBYZTJjf_p9CQHjVgaCa_91271aIcsL86I",
+  authDomain: "wordsoftheweb.firebaseapp.com",
+  databaseURL: "https://wordsoftheweb.firebaseio.com",
+  projectId: "wordsoftheweb",
+  storageBucket: "wordsoftheweb.appspot.com",
+  messagingSenderId: "963187251615",
+  appId: "1:963187251615:web:0c71d6994611fe5035c5aa",
+  measurementId: "G-85GDVHW14X"
 };
+
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
