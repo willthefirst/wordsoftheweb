@@ -16,21 +16,97 @@ firebase.analytics();
 var db = firebase.firestore();
 
 $(document).ready(function () {
-  bindSubmitEntry();
-  streamAllEntries();
+  initialize();
 });
 
+// Livestreams all entries in Firebase
+function initialize() {
+  let loading = true;
+  const $dbEntries = $("#dbEntries");
+  
+  db.collection("entries")
+    .orderBy("dateAdded")
+    .onSnapshot(function (snapshot) {
+
+      // Initial load: load saved data and initialize new entry form
+      if (loading) {
+        $dbEntries.html("");
+        loading = false;
+        snapshot.docs.forEach(function(doc) {
+          const entryId = doc.id;
+          const entryData = doc.data();
+          $dbEntries.append(entryTemplate(entryData.text, entryId));
+        })
+        bindSubmitEntry();
+      }
+
+      // Listen for live updates after initial load
+      snapshot.docChanges().forEach(function(change) {
+        const entryId = change.doc.id;
+        const entryData = change.doc.data();
+        const $entryToUpdate = $(`#fbId_${entryId}`);
+        
+        // If entry exists in DOM, update it
+        if ($entryToUpdate.length) {
+          $entryToUpdate.html(entryData.text);
+        } else {
+          $dbEntries.append(entryTemplate(entryData.text, entryId));
+        }
+      });
+    });
+}
+
 function bindSubmitEntry() {
-  $("#newEntryForm").submit(function (event) {
+  const $newEntryForm = $(".newEntryForm");
+  const $newEntryField = $(".newEntryField");
+  let entryText = "";
+  let initialValue = {
+    text: entryText,
+    dateAdded: new Date(),
+  };
+
+  // Create a new document with a generated id in db.
+  const newEntryRef = db.collection("entries").doc();
+  newEntryRef.set(initialValue);
+  console.log(newEntryRef.id);
+
+  // Updates entry
+  $newEntryField.on("keyup", function (event) {
+    event.preventDefault();
+    entryText = $(this).val();
+    updateNewEntry(newEntryRef, entryText);
+  });
+
+  $newEntryForm.on("submit", function (event) {
     event.preventDefault();
 
-    const entry = event.target.entry.value;
-    saveNewEntry(entry);
+    // Clear the input
+    $newEntryField.val("").focus();
   });
+
+  // Prevent pasting into input
+  $newEntryForm.on("paste", function (event) {
+    event.preventDefault();
+  });
+}
+
+function updateNewEntry(ref, value) {
+  ref
+    .update({
+      text: value,
+    })
+    .then(function () {
+      console.log("Document successfully updated!");
+    })
+    .catch(function (error) {
+      // The document probably doesn't exist.
+      console.error("Error updating document: ", error);
+    });
 }
 
 // Saves a new entry to Firebase
 function saveNewEntry(entry) {
+  return;
   db.collection("entries")
     .add({
       text: entry,
@@ -44,21 +120,10 @@ function saveNewEntry(entry) {
     });
 }
 
-// Livestreams all entries in Firebase
-function streamAllEntries() {
-    const $dbEntries = $('#dbEntries');
-    db.collection("entries")
-    .orderBy("dateAdded")
-    .onSnapshot(function(snapshot) {
-        // Clear loading text
-        $dbEntries.html('');
-        
-        // Isolate the change between snapshots
-        snapshot.docChanges().forEach(function(change) {
-            const entry = change.doc.data();
-            console.log(entry)
-            $dbEntries.append(`${entry.text} * `);
-        });
-    });
 
+function entryTemplate(text, id) {
+  const entryId = `fbId_${id}`;
+
+  return `<span id=${entryId}>${text}</span>
+          <span class="separator"> * </span>`;
 }

@@ -5,6 +5,21 @@ body {
     line-height: 18px;
 }
 
+.newEntryForm {
+    display: inline;
+}
+
+.newEntryField {
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    /* width: 0px; */
+}
+
+.newEntryField:focus {
+    outline: none;
+}
+
 .big {
     font-size: 20px;
 }
