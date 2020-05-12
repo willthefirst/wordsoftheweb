@@ -48,7 +48,11 @@ function saveNewEntry(entry) {
 function streamAllEntries() {
     const $dbEntries = $('#dbEntries');
     db.collection("entries")
+    .orderBy("dateAdded")
     .onSnapshot(function(snapshot) {
+        // Clear loading text
+        $dbEntries.html('');
+        
         // Isolate the change between snapshots
         snapshot.docChanges().forEach(function(change) {
             const entry = change.doc.data();
