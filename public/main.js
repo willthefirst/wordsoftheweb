@@ -96,7 +96,7 @@ function bindNewEntryHandlers() {
 // Creates a new entry in db.
 function createNewEntryRef() {
   let initialValue = {
-    text: "",
+    text: "stary typing...",
     dateAdded: new Date(),
   };
   const newEntryRef = db.collection("entries").doc();
@@ -110,7 +110,7 @@ function updateNewEntry(ref, value) {
     alert('Sorry, not gonna let you type more than 500 characters.');
     return
   }
-  
+
   ref
     .update({
       text: value,
@@ -128,6 +128,6 @@ function updateNewEntry(ref, value) {
 function entryTemplate(text, id) {
   const entryId = `fbId_${id}`;
 
-  return `<span id=${entryId}>${text}</span>
+  return `<span id=${entryId} contenteditable="true">${text}</span>
           <span class="separator"> * </span>`;
 }

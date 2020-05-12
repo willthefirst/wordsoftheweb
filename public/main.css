@@ -1,6 +1,6 @@
 body {
     font-family: "Courier";
-    font-size: 14px;
+    font-size: 12px;
     text-align: justify;
     line-height: 18px;
 }
@@ -13,7 +13,6 @@ body {
     font-family: inherit;
     font-size: inherit;
     border: none;
-    /* width: 0px; */
 }
 
 .newEntryField:focus {
