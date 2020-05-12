@@ -18,10 +18,10 @@
 </head>
 
 <body>
-    <span id="dbEntries">Loading...</span>
+    <div id="dbEntries" class="dbEntries">Loading...</div>
+    <br />
     <form class="newEntryForm" id="newEntryForm" method="post">
-        <input type="text" id="newEntry" class="newEntryField" name="entry" autofocus>
-        <input type="submit" value="Submit">
+        <input type="text" id="newEntry" class="newEntryField" name="entry" maxlength="500" placeholder="Start typing, and press enter to save..." autofocus>
     </form>
 
     <!-- The core Firebase JS SDK is always required and must be listed first -->

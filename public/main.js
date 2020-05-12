@@ -105,6 +105,6 @@ function saveNewEntry(text) {
 
 function entryTemplate(text, id) {
   const entryId = `fbId_${id}`;
-  return `<span id=${entryId} contenteditable="true">${text}</span>
+  return `<span id=${entryId}>${text}</span>
           <span class="separator"> * </span>`;
 }
