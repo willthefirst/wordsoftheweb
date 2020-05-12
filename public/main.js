@@ -13,90 +13,102 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
-var db = firebase.firestore();
+const db = firebase.firestore();
 
 $(document).ready(function () {
-  initialize();
+  initializeWall();
 });
 
 // Livestreams all entries in Firebase
-function initialize() {
+function initializeWall() {
   let loading = true;
   const $dbEntries = $("#dbEntries");
-  
+
   db.collection("entries")
     .orderBy("dateAdded")
     .onSnapshot(function (snapshot) {
-
       // Initial load: load saved data and initialize new entry form
       if (loading) {
         $dbEntries.html("");
         loading = false;
-        snapshot.docs.forEach(function(doc) {
+        snapshot.docs.forEach(function (doc) {
           const entryId = doc.id;
           const entryData = doc.data();
           $dbEntries.append(entryTemplate(entryData.text, entryId));
-        })
-        bindSubmitEntry();
+        });
+        bindNewEntryHandlers();
       }
 
-      // Listen for live updates after initial load
-      snapshot.docChanges().forEach(function(change) {
+      //  After initial load: Listen for live updates
+      snapshot.docChanges().forEach(function (change) {
         const entryId = change.doc.id;
         const entryData = change.doc.data();
         const $entryToUpdate = $(`#fbId_${entryId}`);
-        
-        // If entry exists in DOM, update it
+
         if ($entryToUpdate.length) {
+          // If entry exists in DOM, update it
           $entryToUpdate.html(entryData.text);
         } else {
+          // It it doesn't yet exist, create it
           $dbEntries.append(entryTemplate(entryData.text, entryId));
         }
       });
     });
 }
 
-function bindSubmitEntry() {
+function bindNewEntryHandlers() {
   const $newEntryForm = $(".newEntryForm");
   const $newEntryField = $(".newEntryField");
-  let entryText = "";
-  let initialValue = {
-    text: entryText,
-    dateAdded: new Date(),
-  };
 
-  // Create a new document with a generated id in db.
-  const newEntryRef = db.collection("entries").doc();
-  newEntryRef.set(initialValue);
-  console.log(newEntryRef.id);
+  // Create a new document with in db.
+  const newEntryRef = createNewEntryRef();
 
-  // Updates entry
+  // Update db when form value changes
   $newEntryField.on("keyup", function (event) {
     event.preventDefault();
-    entryText = $(this).val();
-    updateNewEntry(newEntryRef, entryText);
-  });
-
-  $newEntryForm.on("submit", function (event) {
-    event.preventDefault();
-
-    // Clear the input
-    $newEntryField.val("").focus();
+    updateNewEntry(newEntryRef, $(this).val());
   });
 
   // Prevent pasting into input
   $newEntryForm.on("paste", function (event) {
     event.preventDefault();
   });
+
+  $newEntryForm.on("submit", function (event) {
+    event.preventDefault();
+
+    // Unbind all handlers
+    $newEntryForm.off();
+    $newEntryField.off();
+
+    // Clear the input
+    $newEntryField.val("").focus();
+
+    // Reinitialize
+    bindNewEntryHandlers();
+  });
 }
 
+//
+// Firebase methods
+//
+
+// Creates a new entry in db.
+function createNewEntryRef() {
+  let initialValue = {
+    text: "",
+    dateAdded: new Date(),
+  };
+  const newEntryRef = db.collection("entries").doc();
+  newEntryRef.set(initialValue);
+  return newEntryRef;
+}
+
+// Updates entries in db.
 function updateNewEntry(ref, value) {
   ref
     .update({
       text: value,
-    })
-    .then(function () {
-      console.log("Document successfully updated!");
     })
     .catch(function (error) {
       // The document probably doesn't exist.
@@ -104,22 +116,9 @@ function updateNewEntry(ref, value) {
     });
 }
 
-// Saves a new entry to Firebase
-function saveNewEntry(entry) {
-  return;
-  db.collection("entries")
-    .add({
-      text: entry,
-      dateAdded: new Date(),
-    })
-    .then(function (docRef) {
-      console.log("Document written with ID: ", docRef.id);
-    })
-    .catch(function (error) {
-      console.error("Error adding document: ", error);
-    });
-}
-
+//
+// Helpers
+//
 
 function entryTemplate(text, id) {
   const entryId = `fbId_${id}`;
