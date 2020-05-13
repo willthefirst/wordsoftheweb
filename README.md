@@ -21,8 +21,7 @@ In shell:
     - Protect saved posts
     - Prevent empty posts
     - Prevent too many single user submissions per day
+- nicer loading while submission waits?
 - Add big/normal/small toggle
-- Set up Firebase emulator for faster dev?
-https://firebase.google.com/docs/emulator-suite/install_and_configure
 - Learn about VS Code remote debugging? 
 https://marketplace.visualstudio.com/items?itemName=msjsdiag.debugger-for-chrome#cannot-connect-to-the-target%3a-connect-ECONNREFUSED-127.0.0.1%3a9222
