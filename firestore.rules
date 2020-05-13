@@ -8,7 +8,8 @@ service cloud.firestore {
       allow create: if ("text" in request.resource.data)
                             && ("dateAdded" in request.resource.data)
                             && (request.resource.data.text.size() < 500)
-                            && !("sanitized" in request.resource.data)
+                            && !("sanitized" in request.resource.data);
+      allow update: if false;
     }
   }
 }
