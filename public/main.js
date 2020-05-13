@@ -1,4 +1,3 @@
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBYZTJjf_p9CQHjVgaCa_91271aIcsL86I",
   authDomain: "wordsoftheweb.firebaseapp.com",
@@ -7,13 +6,42 @@ const firebaseConfig = {
   storageBucket: "wordsoftheweb.appspot.com",
   messagingSenderId: "963187251615",
   appId: "1:963187251615:web:0c71d6994611fe5035c5aa",
-  measurementId: "G-85GDVHW14X",
+  measurementId: "G-85GDVHW14X"
 };
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
+let currUser;
+
+// Set up auth
+firebase.auth().signInAnonymously().catch(function(error) {
+  // Handle Errors here.
+  var errorCode = error.code;
+  var errorMessage = error.message;
+  console.error(errorCode, errorMessage);
+});
+
+firebase.auth().onAuthStateChanged(function(user) {
+  if (user) {
+    console.log('User signed in.')
+    // User is signed in.
+    var isAnonymous = user.isAnonymous;
+    var uid = user.uid;
+    console.log(user);
+    currUser = user;
+    // ...
+  } else {
+    // User is signed out.
+    // ...
+    console.log('User signed out')
+  }
+});
+
+
+
+// Connect to db
 const db = firebase.firestore();
 
 // Development environment
@@ -66,7 +94,8 @@ function bindNewEntryHandlers() {
     $newEntryField.val("").focus();
 
     saveNewEntry(text)
-      .then(function () {})
+      .then(function () {
+      })
       .catch(function (obj) {
         // If we fail, repopulate the input
         $newEntryField.val(obj.text);

@@ -17,11 +17,11 @@ In shell:
 `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222`
 
 ## Todo
-
-### Bugs
 - Protect API
     - Prevent too many single user submissions per day
     https://firebase.google.com/docs/auth/web/anonymous-auth
+
+### Bugs
 - refactor js to be more private/secure
 
 ### Features
