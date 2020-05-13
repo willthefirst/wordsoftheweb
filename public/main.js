@@ -7,7 +7,7 @@ const firebaseConfig = {
   storageBucket: "wordsoftheweb.appspot.com",
   messagingSenderId: "963187251615",
   appId: "1:963187251615:web:0c71d6994611fe5035c5aa",
-  measurementId: "G-85GDVHW14X"
+  measurementId: "G-85GDVHW14X",
 };
 
 // Initialize Firebase
@@ -20,7 +20,7 @@ const db = firebase.firestore();
 if (location.hostname === "localhost") {
   db.settings({
     host: "localhost:8080",
-    ssl: false
+    ssl: false,
   });
 }
 
@@ -42,7 +42,6 @@ function listenToDB() {
         $dbEntries.html("");
         loading = false;
       }
-      console.log('bacng')
       snapshot.docChanges().forEach(function (change) {
         const entryId = change.doc.id;
         const entryData = change.doc.data();

@@ -84,9 +84,7 @@ function sanitizeEntry(text) {
     allowedAttributes: {},
   };
 
-  let clean = sanitizeHtml(text, settings);
-
-  console.log("User is trying to submit HTML tags. Removing...");
-
+  // Sanitize and trim whitespace
+  let clean = sanitizeHtml(text, settings).trim();
   return clean;
 }
