@@ -14,9 +14,7 @@ Enabling Chrome Debugging
 
 In shell:
 
-/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
-
-
+`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222`
 
 ## Todo
 
@@ -27,6 +25,8 @@ In shell:
 - refactor js to be more private/secure
 
 ### Features
+- update html metadata for search engines
+- how can i make this thing searchable?
 - nicer loading while submission waits?
 - Load page at the bottom
 - Show number of uses currently on the site?
