@@ -16,6 +16,14 @@ firebase.analytics();
 
 const db = firebase.firestore();
 
+// Development environment
+if (location.hostname === "localhost") {
+  db.settings({
+    host: "localhost:8080",
+    ssl: false
+  });
+}
+
 $(document).ready(function () {
   listenToDB();
   bindNewEntryHandlers();
@@ -27,13 +35,14 @@ function listenToDB() {
   const $dbEntries = $("#dbEntries");
 
   db.collection("entries")
+    .where("sanitized", "==", true)
     .orderBy("dateAdded")
     .onSnapshot(function (snapshot) {
       if (loading) {
         $dbEntries.html("");
         loading = false;
       }
-
+      console.log('bacng')
       snapshot.docChanges().forEach(function (change) {
         const entryId = change.doc.id;
         const entryData = change.doc.data();
@@ -60,6 +69,7 @@ function bindNewEntryHandlers() {
     saveNewEntry(text)
       .then(function () {})
       .catch(function (obj) {
+        // If we fail, repopulate the input
         $newEntryField.val(obj.text);
         alert(obj.error);
       });
