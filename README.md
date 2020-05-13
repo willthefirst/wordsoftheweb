@@ -1,10 +1,14 @@
+# Words Of The Web
+
+[Website](https://wordsoftheweb.web.app)
+
 ## Deploy
 
-firebase deploy
+`firebase deploy`
 
 ## Dev
 
-[Console](https://console.firebase.google.com/project/walloftext-78632/database/firestore/data~2Fentries~2F0vbSSAntimHktpUwMct7Ï)
+To run the emulators: `firebase emulators:start`
 
 Enabling Chrome Debugging
 
@@ -16,12 +20,18 @@ In shell:
 
 ## Todo
 
+### Bugs
 - Protect API
-    - Sanitize submissions https://github.com/firebase/functions-samples/tree/master/text-moderation
-    - Protect saved posts
-    - Prevent empty posts
     - Prevent too many single user submissions per day
+    https://firebase.google.com/docs/auth/web/anonymous-auth
+- refactor js to be more private/secure
+
+### Features
 - nicer loading while submission waits?
+- Load page at the bottom
+- Show number of uses currently on the site?
 - Add big/normal/small toggle
+
+### Other
 - Learn about VS Code remote debugging? 
 https://marketplace.visualstudio.com/items?itemName=msjsdiag.debugger-for-chrome#cannot-connect-to-the-target%3a-connect-ECONNREFUSED-127.0.0.1%3a9222
