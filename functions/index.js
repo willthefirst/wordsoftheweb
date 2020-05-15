@@ -43,13 +43,12 @@ app.post("/api/create", async (req, res) => {
     });
   }
 
-  // const clientIP = getIPAddress(req);
-  // checkIP(clientIP)
-  //   .then(() => {
-  //     checkEntryLimit();
-  //     return;
-  //   })
-  checkEntryCount()
+  const clientIP = getIPAddress(req);
+  checkIP(clientIP)
+    .then(() => {
+      checkEntryCount();
+      return;
+    })
     .then(() => {
       addtoDB(entry);
       return;
