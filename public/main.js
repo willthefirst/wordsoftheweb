@@ -106,7 +106,7 @@ async function saveNewEntry(text) {
     method: "POST",
     body: JSON.stringify(entry),
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
   };
 

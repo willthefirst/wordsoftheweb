@@ -20,9 +20,7 @@ In shell:
 
 ## Todo
 - Launch the bwebsite
-    - Load page at the bottom
-    - loosen the hold against IPs a little, let a little bit more through
-    - Get some basic analytics going
+    - Loosen the hold against IPs a little, let a little bit more through
 
 ### Security
 - Extra layer of security (clientside, so hackable) 
@@ -40,6 +38,7 @@ In shell:
 - Set up unit tests
 
 ### Features
+- fancier analytics
 - word conversions
     > hitler
     > nazi

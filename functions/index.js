@@ -24,7 +24,8 @@ admin.initializeApp();
 const db = admin.firestore();
 
 const config = {
-  blockPeriodInMinutes: 10,
+  maxEntriesByIP: 5,
+  blockPeriodInMinutes: 5,
   entryLimitPeriodInMinutes: 60,
   entryLimit: 200
 };
@@ -110,6 +111,7 @@ exports.app = functions.https.onRequest(app);
  */
 
  // Checks and sets IP blocks
+ // #todo refactor, this is some seriously complicated looking business logic
 function checkIP (ipAddress) {
   let ipRef = db.collection("ipBlocks").doc(ipAddress);
   
@@ -118,24 +120,52 @@ function checkIP (ipAddress) {
       // If there are no matches, add this IP to the db
       console.log(`Created new IP block for ${ipAddress}`);
       ipRef.set({
-        expires: minutesFromNow(config.blockPeriodInMinutes),
+        entriesLeft: config.maxEntriesByIP,
+        isBlocked: false,
+        blockExpiresAt: new Date()
       });
     } else {
       // This is a familiar IP.
-      // If block period is over, reset it. Otherwise, reject the entry.
-      const expirationTime = doc.data().expires.toDate();
-      const now = new Date();
+      const entriesLeft = doc.data().entriesLeft;
+      const isBlocked = doc.data().isBlocked;
+      const blockHasExpired = doc.data().blockExpiresAt.toDate() < new Date();
 
-      if (expirationTime < now) {
-        console.log(`Reset block time for ${ipAddress}`);
-        ipRef.set({
-          expires: minutesFromNow(config.blockPeriodInMinutes),
-        });
+      if (isBlocked) {
+        if (!blockHasExpired) {
+          // If block period isn't over, reject
+          throw new Error(
+            `Calm down, we can't handle all your great content. Try again in about ${config.blockPeriodInMinutes} minutes.`
+          );
+        } else {
+          // If block period is over, reset their blocker
+          ipRef.update({
+            entriesLeft: config.maxEntriesByIP,
+            blockExpiresAt: minutesFromNow(config.blockPeriodInMinutes),
+            isBlocked: false,
+          });
+          console.log(
+            `IP address' block period is over. They now have ${config.maxEntriesByIP} entries left.`
+          );
+        }
       } else {
-        console.error(`${ipAddress} is blocked until ${expirationTime}.`);
-        throw new Error(
-          "Since this is but a humble art project, we can't handle too many submissions all at once. You'll have to wait about 10 minutes before submitting again."
-        );
+        if (entriesLeft <= 0) {
+          // If IP has no entries left, reject
+          ipRef.update({
+            blockExpiresAt: minutesFromNow(config.blockPeriodInMinutes),
+            isBlocked: true,
+          });
+          throw new Error(
+            `Calm down, we can't handle all your great content. Try again in about ${config.blockPeriodInMinutes} minutes.`
+          );
+        } else {
+          // If they have entries left, let them through and decrement the counter
+          ipRef.update({
+            entriesLeft: FieldValue.increment(-1),
+          });
+          console.log(
+            `IP address still has ${entriesLeft - 1} entries left before being blocked.`
+          );
+        }
       }
     }
     return;
@@ -204,9 +234,10 @@ function minutesFromNow(diff) {
  */
 
 function getIPAddress(req) {
+  console.log(`Remote address: ${req.connection.remoteAddress}`)
   return (
-    req.headers["x-forwarded-for"] ||
-    "No IP, probably because we are in development mode"
+    req.headers["x-forwarded-for"] || req.headers['fastly-client-ip'] ||
+    "I.AM.IN.DEV.MODE.IP.ADDRESS"
   );
 }
 
