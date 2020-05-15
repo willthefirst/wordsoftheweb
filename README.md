@@ -20,17 +20,23 @@ In shell:
 
 ## Todo
 - Protect API
-    - Prevent too many submissions per hour
-    https://firebase.google.com/docs/auth/web/anonymous-auth
-        > you got this to work. next: examine speed issues, and code organization, and how you want to sign out users depending on submissions.
-    - Do this too: https://stackoverflow.com/questions/35418143/how-to-restrict-firebase-data-modification
-    - https://firebase.google.com/support/guides/launch-checklist
+    - Prevent too many submissions overall per hour
+
+### Security
+- Extra layer of security (clientside, so hackable) 
+        https://firebase.google.com/docs/auth/web/anonymous-auth
 
 ### Bugs
-- refactor js to be more private/secure
 - https://www.youtube.com/watch?v=Lb-Pnytoi-8
 
+### Refactor
+- refactor js to be more private/secure
+- Find ways to cut down doc reads of DB
+    - one idea, which also might solve the SEO thing, is to to progressively generate static html pages of older/unmodifiable entries. If you can write a program that does this...then you could actually have a website for the ages AND you could do fancier live loading BS with the freed up bandwidth.
+
+       
 ### Features
+- Get some basic analytics going
 - update html metadata for search engines
 - how can i make this thing searchable?
 - nicer loading while submission waits?
