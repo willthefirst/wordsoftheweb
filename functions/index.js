@@ -23,6 +23,9 @@ app.use(cors({ origin: true }));
 admin.initializeApp();
 const db = admin.firestore();
 
+// Development mode boolean
+const inDevMode = process.env.FUNCTIONS_EMULATOR
+
 const config = {
   maxEntriesByIP: 5,
   blockPeriodInMinutes: 5,
@@ -234,17 +237,9 @@ function minutesFromNow(diff) {
  */
 
 function getIPAddress(req) {
-  console.log(`Remote address: ${req.connection.remoteAddress}`)
-  return (
-    req.headers["x-forwarded-for"] || req.headers['fastly-client-ip'] ||
-    "I.AM.IN.DEV.MODE.IP.ADDRESS"
-  );
+  let address = inDevMode ? ":::fake.remoteaddress.for.dev.mode" : req.connection.remoteAddress
+  return address
 }
-
-function getUserAgent(req) {
-  return req.headers["user-agent"];
-}
-
 // Checks that the entry fits a format that we like
 function isGoodEntry(entry) {
   if (!entry.text) { throw new Error (`Entry is missing prop: text. ${entry}`); }
