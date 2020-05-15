@@ -80,7 +80,7 @@ function bindNewEntryHandlers() {
         }
       })
       .catch((error) => {
-        console.error(error);
+        alert(error)
       });
   });
 }
@@ -92,11 +92,7 @@ function bindNewEntryHandlers() {
 // Updates entries in db.
 async function saveNewEntry(text) {
   if (text.length < 5 || text.length > 500) {
-    reject({
-      text: text,
-      error: "Too long or short.",
-    });
-    return;
+    throw new Error("Too long or short.")
   }
 
   const entry = {
