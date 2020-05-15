@@ -30,14 +30,23 @@ In shell:
 - https://www.youtube.com/watch?v=Lb-Pnytoi-8
 
 ### Refactor
-- refactor js to be more private/secure
+- use server time instead of `new Date`
+    - https://firebase.google.com/docs/firestore/manage-data/add-data#server_timestamp
+- refactor Client js to be more private/secure
 - Find ways to cut down doc reads of DB
     - one idea, which also might solve the SEO thing, is to to progressively generate static html pages of older/unmodifiable entries. If you can write a program that does this...then you could actually have a website for the ages AND you could do fancier live loading BS with the freed up bandwidth.
+- Refactor server db
+- Set up unit tests
 
-       
 ### Features
+- word conversions
+    > hitler
+    > nazi
+- loosen the hold against IPs a little, let a little bit more through
 - Get some basic analytics going
+- Add ID's (links?) to everything so that they are searchable
 - update html metadata for search engines
+- Add metadata
 - how can i make this thing searchable?
 - nicer loading while submission waits?
 - prettier errors

@@ -7,6 +7,7 @@ const cors = require("cors");
 // Firebase
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
+const FieldValue = admin.firestore.FieldValue;
 
 // Services
 const capitalizeSentence = require("capitalize-sentence");
@@ -24,6 +25,8 @@ const db = admin.firestore();
 
 const config = {
   blockPeriodInMinutes: 10,
+  entryLimitPeriodInMinutes: 60,
+  entryLimit: 200
 };
 
 /*
@@ -34,67 +37,35 @@ app.post("/api/create", async (req, res) => {
   let entry = req.body;
 
   if (!entry) {
-    console.error('Bad request body.')
+    console.error("Bad request body.");
     return res.status(500).send({
-      error: 'Bad request body.',
+      error: "Bad request body.",
     });
   }
 
-  const clientIP = getIPAddress(req);
-  let ipRef = db.collection("ipBlocks").doc(clientIP);
-
-  const checkIP = function() {
-    return ipRef
-      .get()
-      .then((doc) => {
-        if (!doc.exists) {
-          // If there are no matches, add this IP to the db
-          console.log(`Created new IP block for ${clientIP}`);
-          ipRef.set({
-            expires: minutesFromNow(config.blockPeriodInMinutes),
-          });
-        } else {
-          // This is a familiar IP.
-          // If block period is over, reset it. Otherwise, reject the entry.
-          const expirationTime = doc.data().expires.toDate();
-          const now = new Date();
-
-          if (expirationTime < now) {
-            console.log(`Reset block time for ${clientIP}`);
-            ipRef.set({
-              expires: minutesFromNow(config.blockPeriodInMinutes),
-            });
-          } else {
-            console.error(`${clientIP} is blocked until ${expirationTime}.`);
-            throw new Error("Since this is but a humble art project, we can't handle too many submissions all at once. You'll have to wait about 10 minutes before submitting again.");
-          }
-        }
-        return;
-      })
-  }
-
-  const addtoDB = function () {
-    return db
-      .collection("entries")
-      .add(entry)
-  };
-
-  checkIP()
+  // const clientIP = getIPAddress(req);
+  // checkIP(clientIP)
+  //   .then(() => {
+  //     checkEntryLimit();
+  //     return;
+  //   })
+  checkEntryCount()
     .then(() => {
-      addtoDB();
+      addtoDB(entry);
       return;
     })
     .then(() => {
       return res.status(200).send({
         statusCode: 200,
-        error: false
+        error: false,
       });
     })
     .catch((err) => {
       console.error(err);
-      res.status(429).json({
+      // #todo: respond with different status codes w depending on the error
+      return res.status(429).json({
         statusCode: 429,
-        error: err.toString()
+        error: err.toString(),
       });
     });
 
@@ -136,8 +107,93 @@ exports.checkEntryBeforeSave = functions.firestore
 exports.app = functions.https.onRequest(app);
 
 /*
- * Models
+ * DB stuff
  */
+
+ // Checks and sets IP blocks
+function checkIP (ipAddress) {
+  let ipRef = db.collection("ipBlocks").doc(ipAddress);
+  
+  return ipRef.get().then((doc) => {
+    if (!doc.exists) {
+      // If there are no matches, add this IP to the db
+      console.log(`Created new IP block for ${ipAddress}`);
+      ipRef.set({
+        expires: minutesFromNow(config.blockPeriodInMinutes),
+      });
+    } else {
+      // This is a familiar IP.
+      // If block period is over, reset it. Otherwise, reject the entry.
+      const expirationTime = doc.data().expires.toDate();
+      const now = new Date();
+
+      if (expirationTime < now) {
+        console.log(`Reset block time for ${ipAddress}`);
+        ipRef.set({
+          expires: minutesFromNow(config.blockPeriodInMinutes),
+        });
+      } else {
+        console.error(`${ipAddress} is blocked until ${expirationTime}.`);
+        throw new Error(
+          "Since this is but a humble art project, we can't handle too many submissions all at once. You'll have to wait about 10 minutes before submitting again."
+        );
+      }
+    }
+    return;
+  });
+}
+
+// Checks and sets periodic entry limit
+function checkEntryCount() {
+  // #todo refactor: this is p similar to IP period blocks, yet another timed block
+  // Also might want to only increase counter AFTER saving a doc, not before, triggered by save method
+  let entryCountRef = db.collection('entryLimit').doc('entryCount');
+  
+  return entryCountRef.get().then((doc) => {
+    if (!doc.exists) {
+      console.log("No entry limit doc found. Creating one.");
+      entryCountRef.set({
+        count: 1,
+        expires: minutesFromNow(config.entryLimitPeriodInMinutes),
+      });
+    } else {
+      const expirationTime = doc.data().expires.toDate();
+      const now = new Date();
+      const currEntryCount = doc.data().count;
+
+      if (expirationTime < now) {
+        // If we've passed the entry limit expiration time, reset the counter and expiration
+        console.log(`Resetting entry count and expiration time.`);
+        entryCountRef.set({
+          count: 1,
+          expires: minutesFromNow(config.entryLimitPeriodInMinutes),
+        });
+      } else if (currEntryCount < config.entryLimit) {
+        // If we're not past the expiration time and under the limit, increment the counter
+        console.log(
+          `Still accepting entries. ${currEntryCount} of ${config.entryLimit} entries used; limit expires at ${expirationTime}.`
+        );
+        entryCountRef.update({
+          count: FieldValue.increment(1)
+        });
+      } else {
+        // If we're past our limit, increase the count just to know how far over, but return false.
+        entryCountRef.update({
+          count: FieldValue.increment(1),
+        });
+        console.error(`Entry limit surpassed. ${currEntryCount}/${config.entryLimit} entries attempted. Allow entries again at ${expirationTime}.`)
+        throw new Error(
+          `Sorry, we're getting flooded with messages right now. Try again later.`
+        );
+      }
+    }
+    return true;
+  });
+}
+
+const addtoDB = function addToDB(entry) {
+  return db.collection("entries").add(entry);
+};
 
 function minutesFromNow(diff) {
   const now = new Date();
@@ -161,22 +217,12 @@ function getUserAgent(req) {
 
 // Checks that the entry fits a format that we like
 function isGoodEntry(entry) {
-  if (!entry.text) {
-    console.error("Entry is missing prop: text");
-    return false;
-  } else if (!entry.dateAdded) {
-    console.error("Entry is missing prop: dateAdded");
-    return false;
-  } else if (entry.length > 500) {
-    console.error("Entry is too long.");
-    return false;
-  } else if (entry.validated) {
-    console.error(
-      "Entry was submitted with as already validated, probably a malicious submission."
-    );
-    return false;
-  } else {
-    console.log("This is a nice looking entry.");
+  if (!entry.text) { throw new Error (`Entry is missing prop: text. ${entry}`); }
+  else if (!entry.dateAdded) { throw new Error (`Entry is missing prop: dateAdded. ${entry}`) }
+  else if (entry.length > 500) { throw new Error (`Entry is too long.. ${entry}`) }
+  else if (entry.validated) { throw new Error (`Entry was submitted with as already validated, probably a malicious submission.. ${entry}`) }
+  else {
+    console.log(`This is a nice looking entry.`);
     return true;
   }
 }

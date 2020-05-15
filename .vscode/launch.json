@@ -7,7 +7,10 @@
             "request": "attach",
             "port": 9222,
             "url": "http://localhost:5000",
-            "webRoot": "${workspaceFolder}/public"
+            "webRoot": "${workspaceFolder}/public",
         }
-    ]
+    ],
+    "runtimeArgs": [
+        "--disk-cache-size=1"
+      ]
 }
