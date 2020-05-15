@@ -6,40 +6,16 @@ const firebaseConfig = {
   storageBucket: "wordsoftheweb.appspot.com",
   messagingSenderId: "963187251615",
   appId: "1:963187251615:web:0c71d6994611fe5035c5aa",
-  measurementId: "G-85GDVHW14X"
+  measurementId: "G-85GDVHW14X",
 };
+
+let config = {
+  FUNCTIONS_URL: `https://us-central1-wordsoftheweb.cloudfunctions.net`
+}
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
-
-let currUser;
-
-// Set up auth
-firebase.auth().signInAnonymously().catch(function(error) {
-  // Handle Errors here.
-  var errorCode = error.code;
-  var errorMessage = error.message;
-  console.error(errorCode, errorMessage);
-});
-
-firebase.auth().onAuthStateChanged(function(user) {
-  if (user) {
-    console.log('User signed in.')
-    // User is signed in.
-    var isAnonymous = user.isAnonymous;
-    var uid = user.uid;
-    console.log(user);
-    currUser = user;
-    // ...
-  } else {
-    // User is signed out.
-    // ...
-    console.log('User signed out')
-  }
-});
-
-
 
 // Connect to db
 const db = firebase.firestore();
@@ -50,6 +26,8 @@ if (location.hostname === "localhost") {
     host: "localhost:8080",
     ssl: false,
   });
+
+  config.FUNCTIONS_URL = `http://localhost:5001/wordsoftheweb/us-central1`;
 }
 
 $(document).ready(function () {
@@ -63,7 +41,7 @@ function listenToDB() {
   const $dbEntries = $("#dbEntries");
 
   db.collection("entries")
-    .where("sanitized", "==", true)
+    .where("validated", "==", true)
     .orderBy("dateAdded")
     .onSnapshot(function (snapshot) {
       if (loading) {
@@ -94,12 +72,15 @@ function bindNewEntryHandlers() {
     $newEntryField.val("").focus();
 
     saveNewEntry(text)
-      .then(function () {
+      .then((data) => {
+        if (data.statusCode === 429) {
+          // Too many submissions from this IP, rate limited.
+          $newEntryField.val(text);
+          alert(data.error)
+        }
       })
-      .catch(function (obj) {
-        // If we fail, repopulate the input
-        $newEntryField.val(obj.text);
-        alert(obj.error);
+      .catch((error) => {
+        console.error(error);
       });
   });
 }
@@ -109,33 +90,38 @@ function bindNewEntryHandlers() {
 //
 
 // Updates entries in db.
-function saveNewEntry(text) {
-  return new Promise(function (resolve, reject) {
-    if (text.length < 5 || text.length > 500) {
-      reject({
-        text: text,
-        error: "Too long or short.",
-      });
-      return;
-    }
-
-    const entry = {
+async function saveNewEntry(text) {
+  if (text.length < 5 || text.length > 500) {
+    reject({
       text: text,
-      dateAdded: new Date(),
-    };
+      error: "Too long or short.",
+    });
+    return;
+  }
 
-    db.collection("entries")
-      .add(entry)
-      .then(function () {
-        resolve();
-      })
-      .catch(function (error) {
-        reject({
-          text: text,
-          error: error,
-        });
-      });
-  });
+  const entry = {
+    text: text,
+    dateAdded: new Date(),
+  };
+
+  const url = `${config.FUNCTIONS_URL}/app/api/create`;
+
+  const options = {
+    method: "POST",
+    body: JSON.stringify(entry),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  const response = await fetch(url, options)
+    .then((response) => {
+      return response.json()
+    })
+    .then((data) => {
+      return data
+    })
+  return response;
 }
 
 //

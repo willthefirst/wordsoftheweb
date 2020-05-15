@@ -4,13 +4,6 @@ service cloud.firestore {
     match /entries/{entry} {
       // Anyone can read
       allow read;
-      // Limit entries to 500 characters, require a date, and prevent user from setting the "sanitized" boolean
-      allow create: if (request.auth.uid != null)
-                      && ("text" in request.resource.data)
-                      && ("dateAdded" in request.resource.data)
-                      && (request.resource.data.text.size() < 500)
-                      && !("sanitized" in request.resource.data);
-      allow update: if false;
     }
   }
 }
