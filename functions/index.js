@@ -237,9 +237,15 @@ function minutesFromNow(diff) {
  */
 
 function getIPAddress(req) {
-  let address = inDevMode ? ":::fake.remoteaddress.for.dev.mode" : req.connection.remoteAddress
+  let address;
+  if (inDevMode) {
+    address = ":::fake.remoteaddress.for.dev.mode"
+  } else {
+    address = req.headers["x-forwarded-for"] || req.headers['fastly-client-ip'] || req.connection.remoteAddress
+  }
   return address
 }
+
 // Checks that the entry fits a format that we like
 function isGoodEntry(entry) {
   if (!entry.text) { throw new Error (`Entry is missing prop: text. ${entry}`); }
